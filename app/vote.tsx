@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+ import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Modal, ActivityIndicator,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { supabase } from '../lib/supabase';
 
 const PRICE_PER_VOTE = 200;
+const PAYSTACK_PUBLIC_KEY = 'pk_test_09f8e9a4745c6339a999f78cd63d7647bd9d119d';
 
 type Contestant = {
   id: string;
@@ -19,10 +21,10 @@ export default function VoteScreen() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Contestant | null>(null);
   const [voteQty, setVoteQty] = useState(5);
-  const [screen, setScreen] = useState<'list' | 'checkout' | 'success'>('list');
-  const [processing, setProcessing] = useState(false);
+  const [screen, setScreen] = useState<'list' | 'payment' | 'success'>('list');
   const [votingActive, setVotingActive] = useState(true);
-  const [ref] = useState('REF_' + Math.random().toString(36).substr(2, 9).toUpperCase());
+  const [paymentRef] = useState('SOZ_' + Math.random().toString(36).substr(2, 9).toUpperCase());
+  const [voterEmail, setVoterEmail] = useState('voter@soz.com');
 
   const total = voteQty * PRICE_PER_VOTE;
 
@@ -46,34 +48,89 @@ export default function VoteScreen() {
     fetchData();
   }, []);
 
-  const handleConfirmPayment = async () => {
-    if (!selected) return;
-    setProcessing(true);
-
-    await supabase.from('votes').insert({
-      contestant_id: selected.id,
-      amount_paid: total,
-      votes_purchased: voteQty,
-      transaction_ref: ref,
-      payment_status: 'success',
-      voter_email: 'voter@soz.com',
-    });
-
-    await supabase
-      .from('contestants')
-      .update({ vote_count: supabase.rpc('increment', { row_id: selected.id }) })
-      .eq('id', selected.id);
-
-    setProcessing(false);
-    setScreen('success');
-  };
-
   const handleReset = () => {
     setSelected(null);
     setVoteQty(5);
     setScreen('list');
   };
 
+  // Paystack inline HTML
+  const paystackHTML = selected ? `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <style>
+    body { margin: 0; padding: 20px; font-family: sans-serif; background: #f8fafc; }
+    .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
+    .title { font-size: 18px; font-weight: bold; color: #0f172a; margin-bottom: 4px; }
+    .sub { font-size: 12px; color: #64748b; margin-bottom: 16px; }
+    .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .label { font-size: 12px; color: #64748b; }
+    .value { font-size: 12px; font-weight: bold; color: #0f172a; }
+    .amount { font-size: 28px; font-weight: bold; color: #0f172a; text-align: center; margin: 16px 0; }
+    .btn { background: #2563eb; color: white; border: none; border-radius: 12px; padding: 14px; width: 100%; font-size: 14px; font-weight: bold; cursor: pointer; }
+    .cancel { background: white; color: #64748b; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; width: 100%; font-size: 13px; margin-top: 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="title">Stars of Zion</div>
+    <div class="sub">Secure Payment via Paystack</div>
+    <div class="row"><span class="label">Contestant:</span><span class="value">${selected.name}</span></div>
+    <div class="row"><span class="label">Votes:</span><span class="value">${voteQty} votes</span></div>
+    <div class="row"><span class="label">Reference:</span><span class="value" style="color:#2563eb">${paymentRef}</span></div>
+  </div>
+  <div class="amount">₦${total.toLocaleString()}</div>
+  <button class="btn" onclick="payNow()">Pay ₦${total.toLocaleString()} with Paystack</button>
+  <button class="cancel" onclick="window.ReactNativeWebView.postMessage('cancel')">Cancel</button>
+
+  <script>
+    function payNow() {
+      var handler = PaystackPop.setup({
+        key: '${PAYSTACK_PUBLIC_KEY}',
+        email: '${voterEmail}',
+        amount: ${total * 100},
+        currency: 'NGN',
+        ref: '${paymentRef}',
+        metadata: {
+          contestant_id: '${selected.id}',
+          contestant_name: '${selected.name}',
+          votes_purchased: '${voteQty}'
+        },
+        callback: function(response) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            status: 'success',
+            reference: response.reference
+          }));
+        },
+        onClose: function() {
+          window.ReactNativeWebView.postMessage('cancel');
+        }
+      });
+      handler.openIframe();
+    }
+  </script>
+</body>
+</html>
+` : '';
+
+  const handleWebViewMessage = async (event: any) => {
+    const data = event.nativeEvent.data;
+    if (data === 'cancel') {
+      setScreen('list');
+      return;
+    }
+    try {
+      const parsed = JSON.parse(data);
+      if (parsed.status === 'success') {
+        setScreen('success');
+      }
+    } catch (e) {}
+  };
+
+  // SUCCESS SCREEN
   if (screen === 'success' && selected) {
     return (
       <View style={styles.centerScreen}>
@@ -86,7 +143,7 @@ export default function VoteScreen() {
         <View style={styles.successCard}>
           <Row label="Contestant:" value={selected.name} />
           <Row label="Votes Credited:" value={`+${voteQty} Votes`} valueColor="#10b981" />
-          <Row label="Ref Code:" value={ref} valueColor="#2563eb" mono />
+          <Row label="Ref Code:" value={paymentRef} valueColor="#2563eb" mono />
           <Row label="Status:" value="SUCCESS" valueColor="#10b981" />
         </View>
         <TouchableOpacity style={styles.backBtn} onPress={handleReset}>
@@ -96,40 +153,23 @@ export default function VoteScreen() {
     );
   }
 
-  if (screen === 'checkout' && selected) {
+  // PAYSTACK PAYMENT SCREEN
+  if (screen === 'payment' && selected) {
     return (
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <Text style={styles.checkoutHeader}>💳 PAYSTACK SANDBOX SIMULATION</Text>
-        <Text style={styles.checkoutMerchant}>PAYMENT SECURED FOR MERCHANT</Text>
-        <Text style={styles.checkoutTitle}>Stars of Zion Platform</Text>
-        <View style={styles.checkoutCard}>
-          <Row label="Contestant:" value={selected.name} />
-          <Row label="Quantity:" value={`${voteQty} Votes`} />
-          <Row label="Email:" value="voter@soz.com" />
-          <Row label="Reference:" value={ref} valueColor="#2563eb" mono />
-        </View>
-        <Text style={styles.checkoutAmountLabel}>TOTAL AMOUNT (NGN)</Text>
-        <Text style={styles.checkoutAmount}>₦{total.toLocaleString()}</Text>
-        <View style={styles.warningBox}>
-          <Text style={styles.warningText}>⚠️ <Text style={{ fontWeight: 'bold' }}>Sandbox Mode:</Text> Tapping confirm simulates a verified Paystack payment.</Text>
-        </View>
-        <TouchableOpacity
-          style={[styles.confirmBtn, processing && { opacity: 0.6 }]}
-          onPress={handleConfirmPayment}
-          disabled={processing}
-        >
-          {processing
-            ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.confirmBtnText}>Confirm Payment (₦{total.toLocaleString()})</Text>
-          }
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.cancelBtn} onPress={handleReset}>
-          <Text style={styles.cancelBtnText}>Cancel</Text>
-        </TouchableOpacity>
-      </ScrollView>
+      <View style={{ flex: 1 }}>
+        <WebView
+          source={{ html: paystackHTML }}
+          onMessage={handleWebViewMessage}
+          javaScriptEnabled
+          domStorageEnabled
+          startInLoadingState
+          renderLoading={() => <ActivityIndicator color="#2563eb" size="large" style={{ flex: 1 }} />}
+        />
+      </View>
     );
   }
 
+  // CONTESTANT LIST
   return (
     <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
       <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
@@ -164,6 +204,7 @@ export default function VoteScreen() {
         )}
       </ScrollView>
 
+      {/* Bottom Drawer */}
       <Modal visible={!!selected} transparent animationType="slide">
         <TouchableOpacity style={styles.overlay} onPress={() => setSelected(null)} activeOpacity={1} />
         {selected && (
@@ -199,10 +240,10 @@ export default function VoteScreen() {
                   </View>
                 </View>
                 <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>Subtotal:</Text>
+                  <Text style={styles.totalLabel}>Total:</Text>
                   <Text style={styles.totalValue}>₦{total.toLocaleString()}</Text>
                 </View>
-                <TouchableOpacity style={styles.proceedBtn} onPress={() => setScreen('checkout')}>
+                <TouchableOpacity style={styles.proceedBtn} onPress={() => setScreen('payment')}>
                   <Text style={styles.proceedBtnText}>Proceed to Payment</Text>
                 </TouchableOpacity>
               </>
@@ -265,18 +306,6 @@ const styles = StyleSheet.create({
   totalValue: { fontSize: 18, fontWeight: 'bold', color: '#10b981' },
   proceedBtn: { backgroundColor: '#10b981', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   proceedBtnText: { color: '#ffffff', fontWeight: 'bold', fontSize: 13 },
-  checkoutHeader: { fontSize: 10, fontWeight: 'bold', color: '#0d9488', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 },
-  checkoutMerchant: { fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 2, textAlign: 'center' },
-  checkoutTitle: { fontSize: 15, fontWeight: 'bold', color: '#0f172a', textAlign: 'center', textTransform: 'uppercase', marginBottom: 16 },
-  checkoutCard: { backgroundColor: '#ffffff', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#e2e8f0', marginBottom: 16 },
-  checkoutAmountLabel: { fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 2, textAlign: 'center', marginBottom: 4 },
-  checkoutAmount: { fontSize: 28, fontWeight: 'bold', color: '#0f172a', textAlign: 'center', marginBottom: 16 },
-  warningBox: { backgroundColor: '#fffbeb', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#fde68a', marginBottom: 16 },
-  warningText: { fontSize: 10, color: '#92400e', lineHeight: 15 },
-  confirmBtn: { backgroundColor: '#16a34a', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
-  confirmBtnText: { color: '#ffffff', fontWeight: 'bold', fontSize: 13 },
-  cancelBtn: { backgroundColor: '#ffffff', borderRadius: 12, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: '#e2e8f0' },
-  cancelBtnText: { color: '#64748b', fontWeight: '600', fontSize: 12 },
   centerScreen: { flex: 1, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center', padding: 24 },
   successIcon: { width: 72, height: 72, borderRadius: 99, backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   successBadge: { backgroundColor: '#f0fdf4', borderRadius: 99, paddingHorizontal: 14, paddingVertical: 5, borderWidth: 1, borderColor: '#bbf7d0', marginBottom: 14 },
