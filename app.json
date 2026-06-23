@@ -10,6 +10,11 @@
       "package": "com.divinitek.sozvotingapp"
     },
     "owner": "Divinitek",
-    "plugins": ["expo-router"]
+    "plugins": ["expo-router"],
+    "extra": {
+      "eas": {
+        "projectId": "6d1dbb6f-5ff0-4173-95d3-500b798168f1"
+      }
+    }
   }
 }
