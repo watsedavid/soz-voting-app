@@ -3,12 +3,12 @@
     "version": ">= 10.0.0"
   },
   "build": {
-    "preview": {
+    "Preview": {
       "android": {
         "buildType": "apk"
       }
     },
-    "production": {
+    "Production": {
       "android": {
         "buildType": "apk"
       }
