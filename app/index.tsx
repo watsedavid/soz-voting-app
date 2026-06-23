@@ -11,9 +11,9 @@ const { width } = Dimensions.get('window');
 const FLYERS = [
   require('../assets/flyer1.jpg'),
   require('../assets/flyer2.jpg'),
-  require('../assets/flyer3.png'),
+  require('../assets/flyer3.jpg'),
   require('../assets/flyer4.jpg'),
-  require('../assets/flyer5.png'),
+  require('../assets/flyer5.jpg'),
 ];
 
 type Contestant = {
