@@ -4,10 +4,20 @@
     "slug": "soz-voting-app",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f172a"
+    },
     "platforms": ["android"],
     "scheme": "soz-voting-app",
     "android": {
-      "package": "com.divinitek.sozvotingapp"
+      "package": "com.divinitek.sozvotingapp",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0f172a"
+      }
     },
     "owner": "divinitek",
     "plugins": ["expo-router"],
