@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import LoadingScreen from '../components/LoadingScreen';
+import LoadingScreen from './components/LoadingScreen';
 
 export default function Layout() {
   const [isLoading, setIsLoading] = useState(false);
