@@ -30,7 +30,7 @@ export default function Layout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
-          headerTitle: 'VOX.',
+          headerTitle: 'STARS of ZION',
         }}
       />
       <Tabs.Screen
