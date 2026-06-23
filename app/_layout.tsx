@@ -1,9 +1,23 @@
+import { useState, useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import LoadingScreen from '../components/LoadingScreen';
 
 export default function Layout() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <Tabs
+      screenListeners={{
+        tabPress: () => {
+          setIsLoading(true);
+          setTimeout(() => setIsLoading(false), 800);
+        },
+      }}
       screenOptions={{
         tabBarStyle: {
           backgroundColor: '#0f172a',
@@ -30,7 +44,7 @@ export default function Layout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
-          headerTitle: 'STARS of ZION',
+          headerTitle: 'Stars of Zion',
         }}
       />
       <Tabs.Screen
