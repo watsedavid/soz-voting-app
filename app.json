@@ -9,7 +9,7 @@
     "android": {
       "package": "com.divinitek.sozvotingapp"
     },
-    "owner": "Divinitek",
+    "owner": "divinitek",
     "plugins": ["expo-router"],
     "extra": {
       "eas": {
