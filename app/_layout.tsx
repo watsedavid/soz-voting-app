@@ -1,23 +1,9 @@
-import { useState, useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import LoadingScreen from './components/LoadingScreen';
 
 export default function Layout() {
-  const [isLoading, setIsLoading] = useState(false);
-
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
   return (
     <Tabs
-      screenListeners={{
-        tabPress: () => {
-          setIsLoading(true);
-          setTimeout(() => setIsLoading(false), 800);
-        },
-      }}
       screenOptions={{
         tabBarStyle: {
           backgroundColor: '#0f172a',
@@ -35,6 +21,7 @@ export default function Layout() {
         headerStyle: { backgroundColor: '#0f172a' },
         headerTintColor: '#ffffff',
         headerTitleStyle: { fontWeight: 'bold', letterSpacing: 2 },
+        animation: 'fade',
       }}
     >
       <Tabs.Screen
