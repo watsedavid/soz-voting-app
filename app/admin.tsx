@@ -26,8 +26,8 @@ type Vote = {
 
 export default function AdminScreen() {
   const [token, setToken] = useState<string | null>(null);
-  const [email, setEmail] = useState('admin@voting.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<Tab>('rankings');
@@ -66,24 +66,33 @@ export default function AdminScreen() {
     setDataLoading(false);
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setAuthError('');
     setLoading(true);
-    setTimeout(async () => {
-      if (email === 'admin@voting.com' && password === 'admin123') {
-        setToken('jwt_mock_token_active');
+    try {
+      const { data, error } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('email', email.trim())
+        .eq('password_hash', password.trim())
+        .single();
+
+      if (data) {
+        setToken('jwt_active_' + data.id);
         await fetchData();
       } else {
-        setAuthError('Invalid credentials. Use mock credentials below.');
+        setAuthError('Invalid email or password.');
       }
-      setLoading(false);
-    }, 1000);
+    } catch (e) {
+      setAuthError('Invalid email or password.');
+    }
+    setLoading(false);
   };
 
   const handleLogout = () => {
     setToken(null);
-    setEmail('admin@voting.com');
-    setPassword('admin123');
+    setEmail('');
+    setPassword('');
   };
 
   const handleToggleVoting = async (value: boolean) => {
@@ -123,23 +132,37 @@ export default function AdminScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <View style={styles.loginCard}>
           <Text style={styles.loginIcon}>🔐</Text>
-          <Text style={styles.loginTitle}>Admin Login Controller</Text>
-          <Text style={styles.loginSub}>JWT Protected Management Realm</Text>
+          <Text style={styles.loginTitle}>Admin Login</Text>
+          <Text style={styles.loginSub}>Stars of Zion Management Console</Text>
           {!!authError && (
             <View style={styles.errorBox}>
               <Text style={styles.errorText}>⚠️ {authError}</Text>
             </View>
           )}
           <Text style={styles.fieldLabel}>EMAIL</Text>
-          <TextInput style={styles.input} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholderTextColor="#94a3b8" />
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            placeholder="Enter admin email"
+            placeholderTextColor="#94a3b8"
+          />
           <Text style={styles.fieldLabel}>PASSWORD</Text>
-          <TextInput style={styles.input} value={password} onChangeText={setPassword} secureTextEntry placeholderTextColor="#94a3b8" />
-          <View style={styles.credBox}>
-            <Text style={styles.credTitle}>⚡ MOCK DEV CREDENTIALS</Text>
-            <Text style={styles.credText}>Email: <Text style={styles.credHighlight}>admin@voting.com</Text></Text>
-            <Text style={styles.credText}>Password: <Text style={styles.credHighlight}>admin123</Text></Text>
-          </View>
-          <TouchableOpacity style={[styles.loginBtn, loading && { opacity: 0.6 }]} onPress={handleLogin} disabled={loading}>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholder="Enter password"
+            placeholderTextColor="#94a3b8"
+          />
+          <TouchableOpacity
+            style={[styles.loginBtn, loading && { opacity: 0.6 }]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginBtnText}>Authorize Session</Text>}
           </TouchableOpacity>
         </View>
@@ -300,10 +323,6 @@ const styles = StyleSheet.create({
   errorText: { fontSize: 11, color: '#dc2626' },
   fieldLabel: { fontSize: 9, fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
   input: { backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: '#0f172a', marginBottom: 14 },
-  credBox: { backgroundColor: '#f8fafc', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#e2e8f0', marginBottom: 16 },
-  credTitle: { fontSize: 10, fontWeight: 'bold', color: '#334155', marginBottom: 4 },
-  credText: { fontSize: 11, color: '#64748b' },
-  credHighlight: { color: '#2563eb', fontWeight: 'bold' },
   loginBtn: { backgroundColor: '#2563eb', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   loginBtnText: { color: '#ffffff', fontWeight: 'bold', fontSize: 13 },
   adminHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#ffffff', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#e2e8f0' },
