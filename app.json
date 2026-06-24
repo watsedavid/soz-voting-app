@@ -19,7 +19,7 @@
         "backgroundColor": "#0f172a"
       }
     },
-    "owner": "divinitek",
+    "owner": "starsofzions-team",
     "plugins": ["expo-router"],
     "extra": {
       "eas": {
