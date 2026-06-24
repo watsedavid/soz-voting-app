@@ -65,6 +65,12 @@ export default function Layout() {
           headerTitle: 'Admin Console',
         }}
       />
+      <Tabs.Screen
+        name="components/LoadingScreen"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
