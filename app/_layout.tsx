@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'react-native';
 
 export default function Layout() {
   return (
@@ -22,6 +23,13 @@ export default function Layout() {
         headerTintColor: '#ffffff',
         headerTitleStyle: { fontWeight: 'bold', letterSpacing: 2 },
         animation: 'fade',
+        headerTitle: () => (
+          <Image
+            source={require('../assets/icon.png')}
+            style={{ width: 120, height: 36 }}
+            resizeMode="contain"
+          />
+        ),
       }}
     >
       <Tabs.Screen
@@ -31,7 +39,6 @@ export default function Layout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
-          headerTitle: 'Stars of Zion',
         }}
       />
       <Tabs.Screen
