@@ -26,7 +26,7 @@ export default function Layout() {
         headerTitle: () => (
           <Image
             source={require('../assets/icon.png')}
-            style={{ width: 150, height: 45 }}
+            style={{ width: 500, height: 250 }}
             resizeMode="contain"
           />
         ),
