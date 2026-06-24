@@ -25,7 +25,7 @@ export default function Layout() {
         animation: 'fade',
         headerTitle: () => (
           <Image
-            source={require('../assets/icon.png')}
+            source={require('../assets/iconic.png')}
             style={{ width: 500, height: 250 }}
             resizeMode="contain"
           />
