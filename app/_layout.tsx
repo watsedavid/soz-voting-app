@@ -33,8 +33,8 @@ export default function Layout() {
         headerTitleAlign: 'right',
         headerRight: () => (
           <Image
-            source={require('../assets/icon.png')}
-            style={{ width: 140, height: 48, marginRight: 8 }}
+            source={require('../assets/iconic.png')}
+            style={{ width: 500, height: 280, marginRight: 3 }}
             resizeMode="contain"
           />
         ),
