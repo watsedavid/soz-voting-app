@@ -31,13 +31,14 @@ export default function Layout() {
           />
         ),
         headerTitleAlign: 'right',
-        headerRight: () => (
-          <Image
-            source={require('../assets/iconic.png')}
-            style={{ width: 500, height: 280, marginRight: 3 }}
-            resizeMode="contain"
-          />
-        ),
+        headerTitle: () => null,
+headerRight: () => (
+  <Image
+    source={require('../assets/iconic.png')}
+    style={{ width: 500, height: 280, marginRight: -180 }}
+    resizeMode="contain"
+  />
+),
         headerTitle: () => null,
       }}
     >
