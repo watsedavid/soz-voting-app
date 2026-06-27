@@ -1,8 +1,16 @@
+import { useState } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Image, View } from 'react-native';
+import { Image } from 'react-native';
+import AnimatedSplash from './_splash';
 
 export default function Layout() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  if (showSplash) {
+    return <AnimatedSplash onFinish={() => setShowSplash(false)} />;
+  }
+
   return (
     <Tabs
       screenOptions={{
@@ -23,23 +31,14 @@ export default function Layout() {
         headerTintColor: '#ffffff',
         headerTitleStyle: { fontWeight: 'bold', letterSpacing: 2 },
         animation: 'fade',
-        headerTitle: () => (
+        headerTitle: () => null,
+        headerRight: () => (
           <Image
-            source={require('../assets/icon.png')}
-            style={{ width: 140, height: 48 }}
+            source={require('../assets/iconic.png')}
+            style={{ width: 500, height: 280, marginRight: -180 }}
             resizeMode="contain"
           />
         ),
-        headerTitleAlign: 'right',
-        headerTitle: () => null,
-headerRight: () => (
-  <Image
-    source={require('../assets/iconic.png')}
-    style={{ width: 500, height: 280, marginRight: -180 }}
-    resizeMode="contain"
-  />
-),
-        headerTitle: () => null,
       }}
     >
       <Tabs.Screen
@@ -84,6 +83,12 @@ headerRight: () => (
       />
       <Tabs.Screen
         name="components/LoadingScreen"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="_splash"
         options={{
           href: null,
         }}
