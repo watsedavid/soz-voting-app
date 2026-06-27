@@ -55,7 +55,6 @@ export default function HomeScreen() {
     fetchData();
   }, []);
 
-  // Auto-slide every 3 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       const next = (activeSlide + 1) % FLYERS.length;
@@ -74,7 +73,7 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Countdown Banner — FIRST */}
+      {/* Countdown Banner */}
       <View style={styles.countdownCard}>
         <Text style={styles.countdownLabel}>Season 5 Finals Ends In</Text>
         <View style={styles.countdownRow}>
@@ -87,7 +86,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Flyer Carousel — SECOND */}
+      {/* Flyer Carousel */}
       <View style={styles.carouselContainer}>
         <FlatList
           ref={flatListRef}
@@ -105,10 +104,9 @@ export default function HomeScreen() {
             setActiveSlide(index);
           }}
           renderItem={({ item }) => (
-            <Image source={item} style={styles.flyerImage} resizeMode="cover" />
+            <Image source={item} style={styles.flyerImage} resizeMode="contain" />
           )}
         />
-        {/* Dot indicators */}
         <View style={styles.dotsRow}>
           {FLYERS.map((_, i) => (
             <View key={i} style={[styles.dot, i === activeSlide && styles.dotActive]} />
@@ -116,7 +114,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Featured Contestant — THIRD */}
+      {/* Featured Contestant */}
       <Text style={styles.sectionLabel}>⭐ FEATURED CONTESTANT</Text>
 
       {loading ? (
@@ -154,12 +152,12 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
-  content: { gap: 16, paddingBottom: 24 },
-  closedBanner: { backgroundColor: '#fef2f2', margin: 16, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#fecaca' },
+  content: { gap: 16, paddingBottom: 24, paddingTop: 16 },
+  closedBanner: { backgroundColor: '#fef2f2', marginHorizontal: 16, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#fecaca' },
   closedText: { fontSize: 12, fontWeight: 'bold', color: '#dc2626', textAlign: 'center' },
-  carouselContainer: { width: '100%' },
-  flyerImage: { width, height: width * 1.1 },
-  dotsRow: { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingVertical: 10 },
+  carouselContainer: { width: '100%', backgroundColor: '#000' },
+  flyerImage: { width, height: width * 1.3 },
+  dotsRow: { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingVertical: 10, backgroundColor: '#f8fafc' },
   dot: { width: 6, height: 6, borderRadius: 99, backgroundColor: '#cbd5e1' },
   dotActive: { width: 20, backgroundColor: '#2563eb' },
   countdownCard: { backgroundColor: '#0f172a', borderRadius: 16, padding: 16, marginHorizontal: 16, borderWidth: 1, borderColor: '#1e293b' },
