@@ -74,7 +74,20 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Flyer Carousel */}
+      {/* Countdown Banner — FIRST */}
+      <View style={styles.countdownCard}>
+        <Text style={styles.countdownLabel}>Season 5 Finals Ends In</Text>
+        <View style={styles.countdownRow}>
+          {[['12', 'DAYS'], ['08', 'HRS'], ['45', 'MIN']].map(([val, unit]) => (
+            <View key={unit} style={styles.countdownItem}>
+              <Text style={styles.countdownNum}>{val}</Text>
+              <Text style={styles.countdownUnit}>{unit}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* Flyer Carousel — SECOND */}
       <View style={styles.carouselContainer}>
         <FlatList
           ref={flatListRef}
@@ -103,20 +116,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Countdown Banner */}
-      <View style={styles.countdownCard}>
-        <Text style={styles.countdownLabel}>Season 5 Finals Ends In</Text>
-        <View style={styles.countdownRow}>
-          {[['12', 'DAYS'], ['08', 'HRS'], ['45', 'MIN']].map(([val, unit]) => (
-            <View key={unit} style={styles.countdownItem}>
-              <Text style={styles.countdownNum}>{val}</Text>
-              <Text style={styles.countdownUnit}>{unit}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      {/* Featured Contestant */}
+      {/* Featured Contestant — THIRD */}
       <Text style={styles.sectionLabel}>⭐ FEATURED CONTESTANT</Text>
 
       {loading ? (
