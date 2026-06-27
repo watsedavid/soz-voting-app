@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'react-native';
+import { Image, View } from 'react-native';
 
 export default function Layout() {
   return (
@@ -12,7 +12,7 @@ export default function Layout() {
           height: 56,
         },
         tabBarActiveTintColor: '#2563eb',
-        tabBarInactiveTintColor: '#64748b',
+        tabBarInactiveTintColor: '#ffffff',
         tabBarLabelStyle: {
           fontSize: 9,
           fontWeight: 'bold',
@@ -25,11 +25,20 @@ export default function Layout() {
         animation: 'fade',
         headerTitle: () => (
           <Image
-            source={require('../assets/iconic.png')}
-            style={{ width: 500, height: 250 }}
+            source={require('../assets/icon.png')}
+            style={{ width: 140, height: 48 }}
             resizeMode="contain"
           />
         ),
+        headerTitleAlign: 'right',
+        headerRight: () => (
+          <Image
+            source={require('../assets/icon.png')}
+            style={{ width: 140, height: 48, marginRight: 8 }}
+            resizeMode="contain"
+          />
+        ),
+        headerTitle: () => null,
       }}
     >
       <Tabs.Screen
