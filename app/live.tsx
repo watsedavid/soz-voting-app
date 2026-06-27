@@ -4,7 +4,7 @@ import { WebView } from 'react-native-webview';
 import { supabase } from '../lib/supabase';
 
 export default function LiveScreen() {
-  const [streamUrl, setStreamUrl] = useState('');
+  const [videoId, setVideoId] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,7 +15,11 @@ export default function LiveScreen() {
         .eq('id', 'global')
         .single();
 
-      if (data) setStreamUrl(data.youtube_live_url);
+      if (data) {
+        const url = data.youtube_live_url;
+        const match = url.match(/(?:embed\/|watch\?v=|live\/)([a-zA-Z0-9_-]{11})/);
+        if (match) setVideoId(match[1]);
+      }
       setLoading(false);
     };
     fetchStream();
@@ -25,19 +29,40 @@ export default function LiveScreen() {
 <!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <style>
-    * { margin: 0; padding: 0; }
-    body { background: #000; }
-    iframe { width: 100vw; height: 100vh; border: none; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+    #player { width: 100%; height: 100%; }
   </style>
 </head>
 <body>
-  <iframe 
-    src="${streamUrl}?autoplay=1&playsinline=1&rel=0"
-    allow="autoplay; fullscreen; encrypted-media"
-    allowfullscreen
-  ></iframe>
+  <div id="player"></div>
+  <script>
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    var player;
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('player', {
+        videoId: '${videoId}',
+        playerVars: {
+          autoplay: 1,
+          playsinline: 1,
+          rel: 0,
+          modestbranding: 1,
+          controls: 1,
+          fs: 1,
+          origin: 'https://www.youtube.com'
+        },
+        events: {
+          onReady: function(e) { e.target.playVideo(); }
+        }
+      });
+    }
+  </script>
 </body>
 </html>
 `;
@@ -54,7 +79,10 @@ export default function LiveScreen() {
           javaScriptEnabled
           domStorageEnabled
           mediaPlaybackRequiresUserAction={false}
+          allowsInlineMediaPlayback
           userAgent="Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+          originWhitelist={['*']}
+          mixedContentMode="always"
         />
       )}
       <View style={styles.footer}>
