@@ -1,7 +1,7 @@
- import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Modal, ActivityIndicator,
+  Modal, ActivityIndicator, Image,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { supabase } from '../lib/supabase';
@@ -14,6 +14,7 @@ type Contestant = {
   name: string;
   bio: string;
   is_active: boolean;
+  photo_url?: string;
 };
 
 export default function VoteScreen() {
@@ -189,9 +190,17 @@ export default function VoteScreen() {
               style={styles.contestantCard}
               onPress={() => setSelected(item)}
             >
-              <View style={styles.contestantAvatar}>
-                <Text style={styles.avatarText}>{item.name[0]}</Text>
-              </View>
+              {item.photo_url ? (
+                <Image
+                  source={{ uri: item.photo_url }}
+                  style={styles.contestantAvatar}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.contestantAvatar}>
+                  <Text style={styles.avatarText}>{item.name[0]}</Text>
+                </View>
+              )}
               <View style={{ flex: 1 }}>
                 <Text style={styles.contestantName}>{item.name}</Text>
                 <Text style={styles.contestantBio} numberOfLines={1}>{item.bio}</Text>
@@ -211,9 +220,17 @@ export default function VoteScreen() {
           <View style={styles.drawer}>
             <View style={styles.drawerHandle} />
             <View style={styles.drawerHeader}>
-              <View style={styles.drawerAvatar}>
-                <Text style={styles.drawerAvatarText}>{selected.name[0]}</Text>
-              </View>
+              {selected.photo_url ? (
+                <Image
+                  source={{ uri: selected.photo_url }}
+                  style={styles.drawerAvatar}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.drawerAvatar}>
+                  <Text style={styles.drawerAvatarText}>{selected.name[0]}</Text>
+                </View>
+              )}
               <View style={{ flex: 1 }}>
                 <Text style={styles.drawerName}>{selected.name}</Text>
                 <Text style={styles.drawerPrice}>₦200 = 1 Vote</Text>
@@ -278,7 +295,7 @@ const styles = StyleSheet.create({
   countBadge: { backgroundColor: '#e2e8f0', borderRadius: 99, paddingHorizontal: 8, paddingVertical: 2 },
   countBadgeText: { fontSize: 9, fontWeight: 'bold', color: '#475569' },
   contestantCard: { backgroundColor: '#ffffff', borderRadius: 14, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#e2e8f0', elevation: 1 },
-  contestantAvatar: { width: 48, height: 48, borderRadius: 10, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center' },
+  contestantAvatar: { width: 48, height: 48, borderRadius: 10, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
   contestantName: { fontWeight: 'bold', fontSize: 13, color: '#0f172a' },
   contestantBio: { fontSize: 10, color: '#64748b', marginTop: 2 },
@@ -288,7 +305,7 @@ const styles = StyleSheet.create({
   drawer: { backgroundColor: '#ffffff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 36 },
   drawerHandle: { width: 40, height: 4, backgroundColor: '#e2e8f0', borderRadius: 99, alignSelf: 'center', marginBottom: 16 },
   drawerHeader: { flexDirection: 'row', gap: 12, marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-  drawerAvatar: { width: 64, height: 64, borderRadius: 12, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center' },
+  drawerAvatar: { width: 64, height: 64, borderRadius: 12, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   drawerAvatarText: { color: '#fff', fontWeight: 'bold', fontSize: 24 },
   drawerName: { fontSize: 16, fontWeight: 'bold', color: '#0f172a' },
   drawerPrice: { fontSize: 10, color: '#64748b', marginTop: 2 },
