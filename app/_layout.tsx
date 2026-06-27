@@ -23,11 +23,6 @@ function HamburgerDrawer({ onClose }: DrawerProps) {
       <TouchableOpacity style={drawerStyles.backdrop} onPress={onClose} activeOpacity={1} />
       <View style={drawerStyles.drawer}>
         <View style={drawerStyles.drawerHeader}>
-          <Image
-            source={require('../assets/iconic.png')}
-            style={drawerStyles.drawerLogo}
-            resizeMode="contain"
-          />
           <TouchableOpacity onPress={onClose} style={drawerStyles.closeBtn}>
             <Ionicons name="close" size={24} color="#ffffff" />
           </TouchableOpacity>
