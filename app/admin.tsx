@@ -133,7 +133,6 @@ export default function AdminScreen() {
         <View style={styles.loginCard}>
           <Text style={styles.loginIcon}>🔐</Text>
           <Text style={styles.loginTitle}>Admin Login</Text>
-          <Text style={styles.loginSub}>Stars of Zion Management Console</Text>
           {!!authError && (
             <View style={styles.errorBox}>
               <Text style={styles.errorText}>⚠️ {authError}</Text>
