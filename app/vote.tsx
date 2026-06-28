@@ -125,10 +125,21 @@ export default function VoteScreen() {
     }
     try {
       const parsed = JSON.parse(data);
-      if (parsed.status === 'success') {
+      if (parsed.status === 'success' && selected) {
+        // Save vote to Supabase
+        await supabase.from('votes').insert({
+          contestant_id: selected.id,
+          amount_paid: total,
+          votes_purchased: voteQty,
+          transaction_ref: parsed.reference || paymentRef,
+          payment_status: 'success',
+          voter_email: voterEmail,
+        });
         setScreen('success');
       }
-    } catch (e) {}
+    } catch (e) {
+      console.log('Error saving vote:', e);
+    }
   };
 
   // SUCCESS SCREEN
