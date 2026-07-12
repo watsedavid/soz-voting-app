@@ -24,11 +24,31 @@ type Contestant = {
   is_active: boolean;
 };
 
+type TimeLeft = {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+};
+
+function getTimeLeft(deadline: string): TimeLeft {
+  const diff = new Date(deadline).getTime() - new Date().getTime();
+  if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  return {
+    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((diff / (1000 * 60)) % 60),
+    seconds: Math.floor((diff / 1000) % 60),
+  };
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const [featured, setFeatured] = useState<Contestant | null>(null);
   const [loading, setLoading] = useState(true);
   const [votingActive, setVotingActive] = useState(true);
+  const [deadline, setDeadline] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [activeSlide, setActiveSlide] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -49,12 +69,28 @@ export default function HomeScreen() {
         .single();
 
       if (contestants && contestants.length > 0) setFeatured(contestants[0]);
-      if (settings) setVotingActive(settings.voting_active);
+      if (settings) {
+        setVotingActive(settings.voting_active);
+        if (settings.voting_deadline) {
+          setDeadline(settings.voting_deadline);
+          setTimeLeft(getTimeLeft(settings.voting_deadline));
+        }
+      }
       setLoading(false);
     };
     fetchData();
   }, []);
 
+  // Live countdown ticker
+  useEffect(() => {
+    if (!deadline) return;
+    const timer = setInterval(() => {
+      setTimeLeft(getTimeLeft(deadline));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [deadline]);
+
+  // Auto-slide carousel
   useEffect(() => {
     const interval = setInterval(() => {
       const next = (activeSlide + 1) % FLYERS.length;
@@ -63,6 +99,8 @@ export default function HomeScreen() {
     }, 3000);
     return () => clearInterval(interval);
   }, [activeSlide]);
+
+  const pad = (n: number) => String(n).padStart(2, '0');
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -73,11 +111,16 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Countdown Banner */}
+      {/* Live Countdown Banner */}
       <View style={styles.countdownCard}>
-        <Text style={styles.countdownLabel}>Season 5 Finals Ends In</Text>
+        <Text style={styles.countdownLabel}>⏱ Time Left To Vote</Text>
         <View style={styles.countdownRow}>
-          {[['12', 'DAYS'], ['08', 'HRS'], ['45', 'MIN']].map(([val, unit]) => (
+          {[
+            [pad(timeLeft.days), 'DAYS'],
+            [pad(timeLeft.hours), 'HRS'],
+            [pad(timeLeft.minutes), 'MIN'],
+            [pad(timeLeft.seconds), 'SEC'],
+          ].map(([val, unit]) => (
             <View key={unit} style={styles.countdownItem}>
               <Text style={styles.countdownNum}>{val}</Text>
               <Text style={styles.countdownUnit}>{unit}</Text>
@@ -162,9 +205,9 @@ const styles = StyleSheet.create({
   dotActive: { width: 20, backgroundColor: '#2563eb' },
   countdownCard: { backgroundColor: '#0f172a', borderRadius: 16, padding: 16, marginHorizontal: 16, borderWidth: 1, borderColor: '#1e293b' },
   countdownLabel: { color: '#94a3b8', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
-  countdownRow: { flexDirection: 'row', gap: 28 },
-  countdownItem: {},
-  countdownNum: { color: '#ffffff', fontSize: 30, fontWeight: 'bold' },
+  countdownRow: { flexDirection: 'row', gap: 20 },
+  countdownItem: { alignItems: 'center' },
+  countdownNum: { color: '#ffffff', fontSize: 28, fontWeight: 'bold', fontFamily: 'monospace' },
   countdownUnit: { color: '#475569', fontSize: 8, textTransform: 'uppercase', letterSpacing: 2 },
   sectionLabel: { color: '#64748b', fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, paddingHorizontal: 16 },
   featuredCard: { backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginHorizontal: 16, borderWidth: 1, borderColor: '#e2e8f0', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
