@@ -8,7 +8,7 @@
     "build": "eas build --platform android"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.43.0",
+    "@supabase/supabase-js": "2.43.0",
     "@react-navigation/drawer": "^6.6.0",
 "react-native-gesture-handler": "~2.16.0",
 "react-native-reanimated": "~3.10.0",
