@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Modal, ActivityIndicator, Image,
+  Modal, ActivityIndicator, Image, TextInput,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 
 const PRICE_PER_VOTE = 200;
@@ -25,9 +26,14 @@ export default function VoteScreen() {
   const [screen, setScreen] = useState<'list' | 'payment' | 'success'>('list');
   const [votingActive, setVotingActive] = useState(true);
   const [paymentRef] = useState('SOZ_' + Math.random().toString(36).substr(2, 9).toUpperCase());
-  const [voterEmail, setVoterEmail] = useState('voter@soz.com');
+  const [voterEmail] = useState('voter@soz.com');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const total = voteQty * PRICE_PER_VOTE;
+
+  const filteredContestants = contestants.filter(c =>
+    c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,7 +61,6 @@ export default function VoteScreen() {
     setScreen('list');
   };
 
-  // Paystack inline HTML
   const paystackHTML = selected ? `
 <!DOCTYPE html>
 <html>
@@ -83,10 +88,9 @@ export default function VoteScreen() {
     <div class="row"><span class="label">Votes:</span><span class="value">${voteQty} votes</span></div>
     <div class="row"><span class="label">Reference:</span><span class="value" style="color:#2563eb">${paymentRef}</span></div>
   </div>
-  <div class="amount">₦${total.toLocaleString()}</div>
-  <button class="btn" onclick="payNow()">Pay ₦${total.toLocaleString()} with Paystack</button>
+  <div class="amount">&#8358;${total.toLocaleString()}</div>
+  <button class="btn" onclick="payNow()">Pay &#8358;${total.toLocaleString()} with Paystack</button>
   <button class="cancel" onclick="window.ReactNativeWebView.postMessage('cancel')">Cancel</button>
-
   <script>
     function payNow() {
       var handler = PaystackPop.setup({
@@ -126,7 +130,6 @@ export default function VoteScreen() {
     try {
       const parsed = JSON.parse(data);
       if (parsed.status === 'success' && selected) {
-        // Save vote to Supabase
         await supabase.from('votes').insert({
           contestant_id: selected.id,
           amount_paid: total,
@@ -142,7 +145,6 @@ export default function VoteScreen() {
     }
   };
 
-  // SUCCESS SCREEN
   if (screen === 'success' && selected) {
     return (
       <View style={styles.centerScreen}>
@@ -165,7 +167,6 @@ export default function VoteScreen() {
     );
   }
 
-  // PAYSTACK PAYMENT SCREEN
   if (screen === 'payment' && selected) {
     return (
       <View style={{ flex: 1 }}>
@@ -181,21 +182,41 @@ export default function VoteScreen() {
     );
   }
 
-  // CONTESTANT LIST
   return (
     <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={16} color="#94a3b8" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search candidates..."
+          placeholderTextColor="#94a3b8"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <Ionicons name="close-circle" size={16} color="#94a3b8" />
+          </TouchableOpacity>
+        )}
+      </View>
+
       <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
         <View style={styles.listHeader}>
           <Text style={styles.sectionLabel}>CONTESTANTS LIST</Text>
           <View style={styles.countBadge}>
-            <Text style={styles.countBadgeText}>{contestants.length} Nominees</Text>
+            <Text style={styles.countBadgeText}>{filteredContestants.length} Nominees</Text>
           </View>
         </View>
 
         {loading ? (
           <ActivityIndicator color="#2563eb" size="large" style={{ marginTop: 40 }} />
+        ) : filteredContestants.length === 0 ? (
+          <View style={styles.emptySearch}>
+            <Ionicons name="search" size={40} color="#cbd5e1" />
+            <Text style={styles.emptySearchText}>No contestants found</Text>
+          </View>
         ) : (
-          contestants.map((item) => (
+          filteredContestants.map((item) => (
             <TouchableOpacity
               key={item.id}
               style={styles.contestantCard}
@@ -224,7 +245,6 @@ export default function VoteScreen() {
         )}
       </ScrollView>
 
-      {/* Bottom Drawer */}
       <Modal visible={!!selected} transparent animationType="slide">
         <TouchableOpacity style={styles.overlay} onPress={() => setSelected(null)} activeOpacity={1} />
         {selected && (
@@ -232,11 +252,7 @@ export default function VoteScreen() {
             <View style={styles.drawerHandle} />
             <View style={styles.drawerHeader}>
               {selected.photo_url ? (
-                <Image
-                  source={{ uri: selected.photo_url }}
-                  style={styles.drawerAvatar}
-                  resizeMode="cover"
-                />
+                <Image source={{ uri: selected.photo_url }} style={styles.drawerAvatar} resizeMode="cover" />
               ) : (
                 <View style={styles.drawerAvatar}>
                   <Text style={styles.drawerAvatarText}>{selected.name[0]}</Text>
@@ -248,7 +264,6 @@ export default function VoteScreen() {
               </View>
             </View>
             <Text style={styles.drawerBio}>{selected.bio}</Text>
-
             {!votingActive ? (
               <View style={styles.closedBox}>
                 <Text style={styles.closedBoxText}>🔴 Voting is currently closed by admin.</Text>
@@ -301,6 +316,17 @@ const rowStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
   content: { padding: 16, gap: 12 },
+  searchContainer: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#ffffff', marginHorizontal: 16, marginTop: 12, marginBottom: 4,
+    borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10,
+    borderWidth: 1, borderColor: '#e2e8f0',
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
+  },
+  searchIcon: { marginRight: 8 },
+  searchInput: { flex: 1, fontSize: 13, color: '#0f172a' },
+  emptySearch: { alignItems: 'center', paddingVertical: 40, gap: 10 },
+  emptySearchText: { fontSize: 13, color: '#94a3b8' },
   listHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   sectionLabel: { color: '#64748b', fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1 },
   countBadge: { backgroundColor: '#e2e8f0', borderRadius: 99, paddingHorizontal: 8, paddingVertical: 2 },
