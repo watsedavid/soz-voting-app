@@ -22,6 +22,7 @@ type Vote = {
   transaction_ref: string;
   payment_status: string;
   voter_email: string;
+  contestants?: { name: string };
 };
 
 export default function AdminScreen() {
@@ -36,6 +37,8 @@ export default function AdminScreen() {
   const [contestants, setContestants] = useState<Contestant[]>([]);
   const [votes, setVotes] = useState<Vote[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
+  const [deadlineDays, setDeadlineDays] = useState('');
+  const [deadlineHours, setDeadlineHours] = useState('');
 
   const totalVotes = contestants.reduce((sum, c) => sum + c.vote_count, 0);
 
@@ -48,7 +51,7 @@ export default function AdminScreen() {
 
     const { data: v } = await supabase
       .from('votes')
-      .select('*')
+      .select('*, contestants(name)')
       .order('created_at', { ascending: false });
 
     const { data: s } = await supabase
@@ -70,7 +73,7 @@ export default function AdminScreen() {
     setAuthError('');
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('admins')
         .select('*')
         .eq('email', email.trim())
@@ -109,6 +112,27 @@ export default function AdminScreen() {
       .update({ youtube_live_url: streamUrl })
       .eq('id', 'global');
     Alert.alert('Updated', 'Live stream URL updated successfully.');
+  };
+
+  const handleSetDeadline = async () => {
+    const days = parseInt(deadlineDays) || 0;
+    const hours = parseInt(deadlineHours) || 0;
+    if (days === 0 && hours === 0) {
+      Alert.alert('Error', 'Please enter at least 1 day or 1 hour.');
+      return;
+    }
+    const deadline = new Date();
+    deadline.setDate(deadline.getDate() + days);
+    deadline.setHours(deadline.getHours() + hours);
+
+    await supabase
+      .from('settings')
+      .update({ voting_deadline: deadline.toISOString() })
+      .eq('id', 'global');
+
+    Alert.alert('Updated', `Voting deadline set to ${days} days and ${hours} hours from now.`);
+    setDeadlineDays('');
+    setDeadlineHours('');
   };
 
   const handleDisable = (id: string) => {
@@ -181,6 +205,7 @@ export default function AdminScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Voting Toggle */}
       <View style={styles.controlCard}>
         <Text style={styles.controlCardLabel}>VOTING STATE</Text>
         <View style={styles.toggleRow}>
@@ -196,6 +221,40 @@ export default function AdminScreen() {
         </View>
       </View>
 
+      {/* Voting Deadline */}
+      <View style={styles.controlCard}>
+        <Text style={styles.controlCardLabel}>⏱ SET VOTING DEADLINE</Text>
+        <Text style={styles.controlCardSub}>Set how long from now voting will last</Text>
+        <View style={styles.deadlineRow}>
+          <View style={styles.deadlineField}>
+            <TextInput
+              style={styles.deadlineInput}
+              value={deadlineDays}
+              onChangeText={setDeadlineDays}
+              keyboardType="numeric"
+              placeholder="0"
+              placeholderTextColor="#94a3b8"
+            />
+            <Text style={styles.deadlineUnit}>Days</Text>
+          </View>
+          <View style={styles.deadlineField}>
+            <TextInput
+              style={styles.deadlineInput}
+              value={deadlineHours}
+              onChangeText={setDeadlineHours}
+              keyboardType="numeric"
+              placeholder="0"
+              placeholderTextColor="#94a3b8"
+            />
+            <Text style={styles.deadlineUnit}>Hours</Text>
+          </View>
+          <TouchableOpacity style={styles.setDeadlineBtn} onPress={handleSetDeadline}>
+            <Text style={styles.setDeadlineBtnText}>Set</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Stream URL */}
       <View style={styles.controlCard}>
         <Text style={styles.controlCardLabel}>YOUTUBE STREAM URL</Text>
         <TextInput
@@ -210,6 +269,7 @@ export default function AdminScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Tabs */}
       <View style={styles.tabRow}>
         {(['rankings', 'nominees', 'payments'] as Tab[]).map((t) => (
           <TouchableOpacity key={t} style={[styles.tabBtn, tab === t && styles.tabBtnActive]} onPress={() => setTab(t)}>
@@ -297,7 +357,12 @@ export default function AdminScreen() {
                       </View>
                     </View>
                     <View style={styles.paymentRow}>
-                      <Text style={styles.paymentDetail}>{v.votes_purchased} votes · {v.voter_email}</Text>
+                      <Text style={styles.contestantName}>
+                        🏆 {v.contestants?.name || 'Unknown'}
+                      </Text>
+                    </View>
+                    <View style={styles.paymentRow}>
+                      <Text style={styles.paymentDetail}>{v.votes_purchased} votes purchased</Text>
                       <Text style={styles.paymentAmount}>₦{v.amount_paid.toLocaleString()}</Text>
                     </View>
                   </View>
@@ -316,8 +381,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 14 },
   loginCard: { backgroundColor: '#ffffff', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#e2e8f0' },
   loginIcon: { fontSize: 32, textAlign: 'center', marginBottom: 10 },
-  loginTitle: { fontSize: 18, fontWeight: 'bold', color: '#0f172a', textAlign: 'center' },
-  loginSub: { fontSize: 11, color: '#64748b', textAlign: 'center', marginBottom: 20 },
+  loginTitle: { fontSize: 18, fontWeight: 'bold', color: '#0f172a', textAlign: 'center', marginBottom: 20 },
   errorBox: { backgroundColor: '#fef2f2', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#fecaca', marginBottom: 12 },
   errorText: { fontSize: 11, color: '#dc2626' },
   fieldLabel: { fontSize: 9, fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
@@ -330,9 +394,16 @@ const styles = StyleSheet.create({
   logoutBtn: { borderWidth: 1, borderColor: '#fecaca', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 },
   logoutBtnText: { fontSize: 11, fontWeight: 'bold', color: '#ef4444' },
   controlCard: { backgroundColor: '#ffffff', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#e2e8f0' },
-  controlCardLabel: { fontSize: 9, fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
+  controlCardLabel: { fontSize: 9, fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
+  controlCardSub: { fontSize: 10, color: '#94a3b8', marginBottom: 10 },
   toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   toggleStatus: { fontSize: 11, fontWeight: 'bold', letterSpacing: 1 },
+  deadlineRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  deadlineField: { flex: 1, alignItems: 'center' },
+  deadlineInput: { backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 18, fontWeight: 'bold', color: '#0f172a', textAlign: 'center', width: '100%' },
+  deadlineUnit: { fontSize: 10, color: '#64748b', marginTop: 4 },
+  setDeadlineBtn: { backgroundColor: '#2563eb', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 10 },
+  setDeadlineBtnText: { color: '#ffffff', fontWeight: 'bold', fontSize: 12 },
   streamInput: { backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 11, color: '#0f172a', marginBottom: 8 },
   updateBtn: { backgroundColor: '#2563eb', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
   updateBtnText: { color: '#ffffff', fontWeight: 'bold', fontSize: 12 },
@@ -368,6 +439,7 @@ const styles = StyleSheet.create({
   paymentCard: { backgroundColor: '#f8fafc', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#e2e8f0', gap: 6 },
   paymentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   paymentRef: { fontSize: 11, fontWeight: 'bold', color: '#2563eb' },
+  contestantName: { fontSize: 12, fontWeight: 'bold', color: '#0f172a' },
   successBadge: { backgroundColor: '#f0fdf4', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: '#bbf7d0' },
   successBadgeText: { fontSize: 8, fontWeight: 'bold', color: '#10b981' },
   paymentDetail: { fontSize: 10, color: '#64748b' },
