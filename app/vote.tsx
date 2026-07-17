@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 
 const PRICE_PER_VOTE = 200;
-const PAYSTACK_PUBLIC_KEY = 'pk_test_09f8e9a4745c6339a999f78cd63d7647bd9d119d';
+const PAYSTACK_PUBLIC_KEY = 'pk_live_248a919582d6edfbcccc9baa7494f03b41e77263';
 
 type Contestant = {
   id: string;
