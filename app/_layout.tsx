@@ -1,8 +1,49 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Image, View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
+import { Image, View, Text, TouchableOpacity, StyleSheet, Linking, Platform, Alert } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
 import AnimatedSplash from './_splash';
+import { supabase } from '../lib/supabase';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
+async function registerForPushNotifications() {
+  if (!Device.isDevice) return null;
+
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+
+  if (finalStatus !== 'granted') return null;
+
+  const token = (await Notifications.getExpoPushTokenAsync()).data;
+
+  // Save token to Supabase
+  await supabase.from('device_tokens').upsert({ token }, { onConflict: 'token' });
+
+  if (Platform.OS === 'android') {
+    Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#2563eb',
+    });
+  }
+
+  return token;
+}
 
 type DrawerProps = {
   onClose: () => void;
@@ -29,7 +70,6 @@ function HamburgerDrawer({ onClose }: DrawerProps) {
         </View>
 
         <Text style={drawerStyles.drawerTagline}>Reality Music Show · Season 5</Text>
-
         <View style={drawerStyles.divider} />
 
         {menuItems.map((item) => (
@@ -45,7 +85,6 @@ function HamburgerDrawer({ onClose }: DrawerProps) {
         ))}
 
         <View style={drawerStyles.divider} />
-
         <Text style={drawerStyles.drawerFooter}>© 2026 Stars of Zion. All rights reserved.</Text>
       </View>
     </View>
@@ -55,6 +94,25 @@ function HamburgerDrawer({ onClose }: DrawerProps) {
 export default function Layout() {
   const [showSplash, setShowSplash] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const notificationListener = useRef<any>();
+  const responseListener = useRef<any>();
+
+  useEffect(() => {
+    registerForPushNotifications();
+
+    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification received:', notification);
+    });
+
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Notification tapped:', response);
+    });
+
+    return () => {
+      Notifications.removeNotificationSubscription(notificationListener.current);
+      Notifications.removeNotificationSubscription(responseListener.current);
+    };
+  }, []);
 
   if (showSplash) {
     return <AnimatedSplash onFinish={() => setShowSplash(false)} />;
@@ -67,7 +125,9 @@ export default function Layout() {
           tabBarStyle: {
             backgroundColor: '#0f172a',
             borderTopColor: '#1e293b',
-            height: 56,
+            height: 60,
+            paddingBottom: 8,
+            paddingTop: 6,
           },
           tabBarActiveTintColor: '#2563eb',
           tabBarInactiveTintColor: '#ffffff',
@@ -83,12 +143,14 @@ export default function Layout() {
           animation: 'fade',
           headerTitle: () => null,
           headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => setDrawerOpen(true)}
-              style={{ marginLeft: 16 }}
-            >
-              <Ionicons name="menu" size={28} color="#ffffff" />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 16, gap: 14 }}>
+              <TouchableOpacity onPress={() => setDrawerOpen(true)}>
+                <Ionicons name="menu" size={28} color="#ffffff" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => Alert.alert('Notifications', 'You will be notified when voting opens or closes.')}>
+                <Ionicons name="notifications-outline" size={24} color="#ffffff" />
+              </TouchableOpacity>
+            </View>
           ),
           headerRight: () => (
             <Image
