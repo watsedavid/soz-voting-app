@@ -30,7 +30,6 @@ async function registerForPushNotifications() {
 
   const token = (await Notifications.getExpoPushTokenAsync()).data;
 
-  // Save token to Supabase
   await supabase.from('device_tokens').upsert({ token }, { onConflict: 'token' });
 
   if (Platform.OS === 'android') {
@@ -123,14 +122,19 @@ export default function Layout() {
       <Tabs
         screenOptions={{
           tabBarStyle: {
-            backgroundColor: '#0f172a',
-            borderTopColor: '#1e293b',
-            height: 60,
-            paddingBottom: 8,
-            paddingTop: 6,
+            backgroundColor: '#ffffff',
+            borderTopWidth: 0,
+            height: 65,
+            paddingBottom: 10,
+            paddingTop: 8,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: 0.08,
+            shadowRadius: 12,
+            elevation: 20,
           },
           tabBarActiveTintColor: '#2563eb',
-          tabBarInactiveTintColor: '#ffffff',
+          tabBarInactiveTintColor: '#94a3b8',
           tabBarLabelStyle: {
             fontSize: 9,
             fontWeight: 'bold',
