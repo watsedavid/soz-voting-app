@@ -113,7 +113,7 @@ export default function HomeScreen() {
 
       {/* Live Countdown Banner */}
       <View style={styles.countdownCard}>
-        <Text style={styles.countdownLabel}>⏱ Time Left To Vote</Text>
+        <Text style={styles.countdownLabel}>⏱ TIME LEFT TO VOTE</Text>
         <View style={styles.countdownRow}>
           {[
             [pad(timeLeft.days), 'DAYS'],
@@ -130,26 +130,28 @@ export default function HomeScreen() {
       </View>
 
       {/* Flyer Carousel */}
-      <View style={styles.carouselContainer}>
-        <FlatList
-          ref={flatListRef}
-          data={FLYERS}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(_, i) => i.toString()}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-            { useNativeDriver: false }
-          )}
-          onMomentumScrollEnd={(e) => {
-            const index = Math.round(e.nativeEvent.contentOffset.x / width);
-            setActiveSlide(index);
-          }}
-          renderItem={({ item }) => (
-            <Image source={item} style={styles.flyerImage} resizeMode="contain" />
-          )}
-        />
+      <View style={styles.carouselWrapper}>
+        <View style={styles.carouselContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={FLYERS}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(_, i) => i.toString()}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+              { useNativeDriver: false }
+            )}
+            onMomentumScrollEnd={(e) => {
+              const index = Math.round(e.nativeEvent.contentOffset.x / (width - 32));
+              setActiveSlide(index);
+            }}
+            renderItem={({ item }) => (
+              <Image source={item} style={styles.flyerImage} resizeMode="cover" />
+            )}
+          />
+        </View>
         <View style={styles.dotsRow}>
           {FLYERS.map((_, i) => (
             <View key={i} style={[styles.dot, i === activeSlide && styles.dotActive]} />
@@ -157,31 +159,18 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Featured Contestant */}
-      <Text style={styles.sectionLabel}>⭐ FEATURED CONTESTANT</Text>
+      {/* Vote Now Button */}
+      <TouchableOpacity
+        style={[styles.voteNowBtn, !votingActive && styles.voteBtnDisabled]}
+        onPress={() => votingActive && router.push('/vote')}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.voteNowBtnText}>
+          {votingActive ? 'Vote Now ᴺ' : 'Voting Closed'}
+        </Text>
+      </TouchableOpacity>
 
-      {loading ? (
-        <ActivityIndicator color="#2563eb" size="large" />
-      ) : featured ? (
-        <View style={styles.featuredCard}>
-          <View style={styles.featuredBadge}>
-            <Text style={styles.featuredBadgeText}>TOP CANDIDATE</Text>
-          </View>
-          <Text style={styles.featuredName}>{featured.name}</Text>
-          <Text style={styles.featuredBio}>{featured.bio}</Text>
-          <TouchableOpacity
-            style={[styles.voteBtn, !votingActive && styles.voteBtnDisabled]}
-            onPress={() => votingActive && router.push('/vote')}
-          >
-            <Text style={styles.voteBtnText}>
-              {votingActive ? 'Vote Now →' : 'Voting Closed'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <Text style={styles.empty}>No contestants yet.</Text>
-      )}
-
+      {/* Security Note */}
       <View style={styles.securityNote}>
         <Text style={styles.securityTitle}>🔒 Auditable Security</Text>
         <Text style={styles.securityText}>
@@ -196,29 +185,67 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
   content: { gap: 16, paddingBottom: 24, paddingTop: 16 },
-  closedBanner: { backgroundColor: '#fef2f2', marginHorizontal: 16, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#fecaca' },
+  closedBanner: {
+    backgroundColor: '#fef2f2', marginHorizontal: 16, borderRadius: 12,
+    padding: 12, borderWidth: 1, borderColor: '#fecaca',
+  },
   closedText: { fontSize: 12, fontWeight: 'bold', color: '#dc2626', textAlign: 'center' },
-  carouselContainer: { width: '100%', backgroundColor: '#000' },
-  flyerImage: { width, height: width * 1.3 },
-  dotsRow: { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingVertical: 10, backgroundColor: '#f8fafc' },
+
+  // Countdown
+  countdownCard: {
+    backgroundColor: '#0f172a', borderRadius: 16, padding: 16,
+    marginHorizontal: 16, borderWidth: 1, borderColor: '#1e293b',
+  },
+  countdownLabel: {
+    color: '#94a3b8', fontSize: 10, textTransform: 'uppercase',
+    letterSpacing: 1, marginBottom: 12,
+  },
+  countdownRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  countdownItem: { alignItems: 'center', flex: 1 },
+  countdownNum: {
+    color: '#ffffff', fontSize: 30, fontWeight: 'bold', fontFamily: 'monospace',
+  },
+  countdownUnit: {
+    color: '#ffffff', fontSize: 9, textTransform: 'uppercase',
+    letterSpacing: 2, marginTop: 4, opacity: 0.7,
+  },
+
+  // Carousel
+  carouselWrapper: { marginHorizontal: 16 },
+  carouselContainer: {
+    borderRadius: 16, overflow: 'hidden',
+    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4,
+  },
+  flyerImage: { width: width - 32, height: (width - 32) * 1.05 },
+  dotsRow: {
+    flexDirection: 'row', justifyContent: 'center',
+    gap: 6, paddingVertical: 10,
+  },
   dot: { width: 6, height: 6, borderRadius: 99, backgroundColor: '#cbd5e1' },
   dotActive: { width: 20, backgroundColor: '#2563eb' },
-  countdownCard: { backgroundColor: '#0f172a', borderRadius: 16, padding: 16, marginHorizontal: 16, borderWidth: 1, borderColor: '#1e293b' },
-  countdownLabel: { color: '#94a3b8', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
-  countdownRow: { flexDirection: 'row', gap: 20 },
-  countdownItem: { alignItems: 'center' },
-  countdownNum: { color: '#ffffff', fontSize: 28, fontWeight: 'bold', fontFamily: 'monospace' },
-  countdownUnit: { color: '#475569', fontSize: 8, textTransform: 'uppercase', letterSpacing: 2 },
-  sectionLabel: { color: '#64748b', fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, paddingHorizontal: 16 },
-  featuredCard: { backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginHorizontal: 16, borderWidth: 1, borderColor: '#e2e8f0', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  featuredBadge: { backgroundColor: '#2563eb', borderRadius: 4, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, marginBottom: 10 },
-  featuredBadgeText: { color: '#ffffff', fontSize: 9, fontWeight: 'bold', letterSpacing: 1 },
-  featuredName: { fontSize: 20, fontWeight: 'bold', color: '#0f172a', marginBottom: 6 },
-  featuredBio: { fontSize: 12, color: '#64748b', lineHeight: 18, marginBottom: 16 },
-  voteBtn: { backgroundColor: '#2563eb', borderRadius: 10, paddingVertical: 13, alignItems: 'center' },
+
+  // Vote Now Button
+  voteNowBtn: {
+    backgroundColor: '#2563eb',
+    marginHorizontal: 16,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    shadowColor: '#2563eb',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
   voteBtnDisabled: { backgroundColor: '#94a3b8' },
-  voteBtnText: { color: '#ffffff', fontWeight: 'bold', fontSize: 13 },
-  securityNote: { backgroundColor: '#f1f5f9', borderRadius: 12, padding: 14, marginHorizontal: 16, borderWidth: 1, borderColor: '#e2e8f0' },
+  voteNowBtnText: {
+    color: '#ffffff', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5,
+  },
+
+  // Security
+  securityNote: {
+    backgroundColor: '#f1f5f9', borderRadius: 12, padding: 14,
+    marginHorizontal: 16, borderWidth: 1, borderColor: '#e2e8f0',
+  },
   securityTitle: { fontSize: 11, fontWeight: 'bold', color: '#334155', marginBottom: 4 },
   securityText: { fontSize: 10, color: '#64748b', lineHeight: 15 },
   empty: { fontSize: 12, color: '#64748b', textAlign: 'center' },
