@@ -17,21 +17,15 @@ Notifications.setNotificationHandler({
 
 async function registerForPushNotifications() {
   if (!Device.isDevice) return null;
-
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
-
   if (existingStatus !== 'granted') {
     const { status } = await Notifications.requestPermissionsAsync();
     finalStatus = status;
   }
-
   if (finalStatus !== 'granted') return null;
-
   const token = (await Notifications.getExpoPushTokenAsync()).data;
-
   await supabase.from('device_tokens').upsert({ token }, { onConflict: 'token' });
-
   if (Platform.OS === 'android') {
     Notifications.setNotificationChannelAsync('default', {
       name: 'default',
@@ -40,7 +34,6 @@ async function registerForPushNotifications() {
       lightColor: '#2563eb',
     });
   }
-
   return token;
 }
 
@@ -67,10 +60,8 @@ function HamburgerDrawer({ onClose }: DrawerProps) {
             <Ionicons name="close" size={24} color="#ffffff" />
           </TouchableOpacity>
         </View>
-
         <Text style={drawerStyles.drawerTagline}>Reality Music Show · Season 5</Text>
         <View style={drawerStyles.divider} />
-
         {menuItems.map((item) => (
           <TouchableOpacity
             key={item.label}
@@ -82,7 +73,6 @@ function HamburgerDrawer({ onClose }: DrawerProps) {
             <Ionicons name="chevron-forward" size={16} color="#475569" />
           </TouchableOpacity>
         ))}
-
         <View style={drawerStyles.divider} />
         <Text style={drawerStyles.drawerFooter}>© 2026 Stars of Zion. All rights reserved.</Text>
       </View>
@@ -98,15 +88,12 @@ export default function Layout() {
 
   useEffect(() => {
     registerForPushNotifications();
-
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
       console.log('Notification received:', notification);
     });
-
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
       console.log('Notification tapped:', response);
     });
-
     return () => {
       Notifications.removeNotificationSubscription(notificationListener.current);
       Notifications.removeNotificationSubscription(responseListener.current);
@@ -143,7 +130,6 @@ export default function Layout() {
           },
           headerStyle: { backgroundColor: '#0f172a' },
           headerTintColor: '#ffffff',
-          headerTitleStyle: { fontWeight: 'bold', letterSpacing: 2 },
           animation: 'fade',
           headerTitle: () => null,
           headerLeft: () => (
@@ -180,7 +166,7 @@ export default function Layout() {
           options={{
             title: 'Vote',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="trophy" size={size} color={color} />
+              <Ionicons name="checkbox-outline" size={size} color={color} />
             ),
             headerTitle: () => null,
           }}
@@ -190,7 +176,7 @@ export default function Layout() {
           options={{
             title: 'Live',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="tv" size={size} color={color} />
+              <Ionicons name="videocam" size={size} color={color} />
             ),
             headerTitle: () => null,
             headerStyle: { backgroundColor: '#000000' },
@@ -201,7 +187,7 @@ export default function Layout() {
           options={{
             title: 'Admin',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="shield" size={size} color={color} />
+              <Ionicons name="shield-checkmark-outline" size={size} color={color} />
             ),
             headerTitle: () => null,
           }}
@@ -248,13 +234,7 @@ const drawerStyles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  drawerLogo: {
-    width: 120,
-    height: 50,
-  },
-  closeBtn: {
-    padding: 4,
-  },
+  closeBtn: { padding: 4 },
   drawerTagline: {
     fontSize: 10,
     color: '#64748b',
