@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import {
   ScrollView, View, Text, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Image, Dimensions, Animated, FlatList,
+  Image, Dimensions, Animated, FlatList,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../lib/supabase';
@@ -37,7 +37,6 @@ function getTimeLeft(deadline: string): TimeLeft {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
   const [votingActive, setVotingActive] = useState(true);
   const [deadline, setDeadline] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -60,7 +59,6 @@ export default function HomeScreen() {
           setTimeLeft(getTimeLeft(settings.voting_deadline));
         }
       }
-      setLoading(false);
     };
     fetchData();
   }, []);
@@ -114,7 +112,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Flyer Carousel - square with rounded corners */}
+      {/* Flyer Carousel */}
       <View style={styles.carouselWrapper}>
         <FlatList
           ref={flatListRef}
@@ -144,18 +142,16 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Vote Now Button - pill shape, not full width */}
-      <View style={styles.voteBtnWrapper}>
-        <TouchableOpacity
-          style={[styles.voteNowBtn, !votingActive && styles.voteBtnDisabled]}
-          onPress={() => votingActive && router.push('/vote')}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.voteNowBtnText}>
-            {votingActive ? 'Vote Now ᴺ' : 'Voting Closed'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* Vote Now Button */}
+      <TouchableOpacity
+        style={[styles.voteNowBtn, !votingActive && styles.voteBtnDisabled]}
+        onPress={() => votingActive && router.push('/vote')}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.voteNowBtnText}>
+          {votingActive ? 'Vote Now ᴺ' : 'Voting Closed'}
+        </Text>
+      </TouchableOpacity>
 
     </ScrollView>
   );
@@ -163,7 +159,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f2f5' },
-  content: { gap: 16, paddingBottom: 30, paddingTop: 12 },
+  content: { gap: 20, paddingBottom: 30, paddingTop: 16 },
   closedBanner: {
     backgroundColor: '#fef2f2', marginHorizontal: 20, borderRadius: 12,
     padding: 12, borderWidth: 1, borderColor: '#fecaca',
@@ -172,21 +168,32 @@ const styles = StyleSheet.create({
 
   // Countdown
   countdownCard: {
-    backgroundColor: '#0f172a', borderRadius: 16, padding: 18,
-    marginHorizontal: 20, borderWidth: 1, borderColor: '#1e293b',
+    backgroundColor: '#0d1b2e',
+    borderRadius: 16,
+    padding: 18,
+    marginHorizontal: 20,
   },
   countdownLabel: {
-    color: '#64748b', fontSize: 10, textTransform: 'uppercase',
-    letterSpacing: 1, marginBottom: 12,
+    color: '#64748b',
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 14,
   },
   countdownRow: { flexDirection: 'row', justifyContent: 'space-between' },
   countdownItem: { alignItems: 'center', flex: 1 },
   countdownNum: {
-    color: '#ffffff', fontSize: 32, fontWeight: 'bold', fontFamily: 'monospace',
+    color: '#ffffff',
+    fontSize: 34,
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
   },
   countdownUnit: {
-    color: '#64748b', fontSize: 9, textTransform: 'uppercase',
-    letterSpacing: 1, marginTop: 4,
+    color: '#64748b',
+    fontSize: 9,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginTop: 4,
   },
 
   // Carousel
@@ -194,37 +201,39 @@ const styles = StyleSheet.create({
   flyerCard: {
     width: CARD_WIDTH,
     height: CARD_WIDTH,
-    borderRadius: 20,
+    borderRadius: 18,
     overflow: 'hidden',
+    elevation: 4,
     shadowColor: '#000',
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.12,
     shadowRadius: 10,
-    elevation: 5,
   },
   flyerImage: { width: CARD_WIDTH, height: CARD_WIDTH },
   dotsRow: {
-    flexDirection: 'row', justifyContent: 'center',
-    gap: 6, paddingVertical: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+    paddingTop: 12,
   },
   dot: { width: 6, height: 6, borderRadius: 99, backgroundColor: '#cbd5e1' },
   dotActive: { width: 20, backgroundColor: '#2563eb' },
 
   // Vote Now Button
-  voteBtnWrapper: { alignItems: 'center', paddingHorizontal: 20 },
   voteNowBtn: {
     backgroundColor: '#2563eb',
+    marginHorizontal: 20,
     borderRadius: 14,
-    paddingVertical: 15,
-    paddingHorizontal: 40,
+    paddingVertical: 16,
     alignItems: 'center',
-    width: '100%',
+    elevation: 4,
     shadowColor: '#2563eb',
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 6,
   },
   voteBtnDisabled: { backgroundColor: '#94a3b8' },
   voteNowBtnText: {
-    color: '#ffffff', fontWeight: 'bold', fontSize: 16,
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
