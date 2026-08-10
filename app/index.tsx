@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { supabase } from '../lib/supabase';
 
 const { width } = Dimensions.get('window');
+const CARD_WIDTH = width - 40;
 
 const FLYERS = [
   require('../assets/flyer1.jpg'),
@@ -15,14 +16,6 @@ const FLYERS = [
   require('../assets/flyer4.jpg'),
   require('../assets/flyer5.jpg'),
 ];
-
-type Contestant = {
-  id: string;
-  name: string;
-  bio: string;
-  vote_count: number;
-  is_active: boolean;
-};
 
 type TimeLeft = {
   days: number;
@@ -44,7 +37,6 @@ function getTimeLeft(deadline: string): TimeLeft {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [featured, setFeatured] = useState<Contestant | null>(null);
   const [loading, setLoading] = useState(true);
   const [votingActive, setVotingActive] = useState(true);
   const [deadline, setDeadline] = useState<string | null>(null);
@@ -55,20 +47,12 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: contestants } = await supabase
-        .from('contestants')
-        .select('*')
-        .eq('is_active', true)
-        .order('vote_count', { ascending: false })
-        .limit(1);
-
       const { data: settings } = await supabase
         .from('settings')
         .select('*')
         .eq('id', 'global')
         .single();
 
-      if (contestants && contestants.length > 0) setFeatured(contestants[0]);
       if (settings) {
         setVotingActive(settings.voting_active);
         if (settings.voting_deadline) {
@@ -81,7 +65,6 @@ export default function HomeScreen() {
     fetchData();
   }, []);
 
-  // Live countdown ticker
   useEffect(() => {
     if (!deadline) return;
     const timer = setInterval(() => {
@@ -90,7 +73,6 @@ export default function HomeScreen() {
     return () => clearInterval(timer);
   }, [deadline]);
 
-  // Auto-slide carousel
   useEffect(() => {
     const interval = setInterval(() => {
       const next = (activeSlide + 1) % FLYERS.length;
@@ -103,15 +85,18 @@ export default function HomeScreen() {
   const pad = (n: number) => String(n).padStart(2, '0');
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
       {!votingActive && (
         <View style={styles.closedBanner}>
           <Text style={styles.closedText}>🔴 Voting is currently closed</Text>
         </View>
       )}
 
-      {/* Live Countdown Banner */}
+      {/* Countdown */}
       <View style={styles.countdownCard}>
         <Text style={styles.countdownLabel}>⏱ TIME LEFT TO VOTE</Text>
         <View style={styles.countdownRow}>
@@ -129,29 +114,29 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Flyer Carousel */}
+      {/* Flyer Carousel - square with rounded corners */}
       <View style={styles.carouselWrapper}>
-        <View style={styles.carouselContainer}>
-          <FlatList
-            ref={flatListRef}
-            data={FLYERS}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(_, i) => i.toString()}
-            onScroll={Animated.event(
-              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-              { useNativeDriver: false }
-            )}
-            onMomentumScrollEnd={(e) => {
-              const index = Math.round(e.nativeEvent.contentOffset.x / (width - 32));
-              setActiveSlide(index);
-            }}
-            renderItem={({ item }) => (
+        <FlatList
+          ref={flatListRef}
+          data={FLYERS}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(_, i) => i.toString()}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: false }
+          )}
+          onMomentumScrollEnd={(e) => {
+            const index = Math.round(e.nativeEvent.contentOffset.x / CARD_WIDTH);
+            setActiveSlide(index);
+          }}
+          renderItem={({ item }) => (
+            <View style={styles.flyerCard}>
               <Image source={item} style={styles.flyerImage} resizeMode="cover" />
-            )}
-          />
-        </View>
+            </View>
+          )}
+        />
         <View style={styles.dotsRow}>
           {FLYERS.map((_, i) => (
             <View key={i} style={[styles.dot, i === activeSlide && styles.dotActive]} />
@@ -159,23 +144,17 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Vote Now Button */}
-      <TouchableOpacity
-        style={[styles.voteNowBtn, !votingActive && styles.voteBtnDisabled]}
-        onPress={() => votingActive && router.push('/vote')}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.voteNowBtnText}>
-          {votingActive ? 'Vote Now ᴺ' : 'Voting Closed'}
-        </Text>
-      </TouchableOpacity>
-
-      {/* Security Note */}
-      <View style={styles.securityNote}>
-        <Text style={styles.securityTitle}>🔒 Auditable Security</Text>
-        <Text style={styles.securityText}>
-          Voter screens are decoupled from vote tallies. Only verified Paystack webhook signatures authorize transactions.
-        </Text>
+      {/* Vote Now Button - pill shape, not full width */}
+      <View style={styles.voteBtnWrapper}>
+        <TouchableOpacity
+          style={[styles.voteNowBtn, !votingActive && styles.voteBtnDisabled]}
+          onPress={() => votingActive && router.push('/vote')}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.voteNowBtnText}>
+            {votingActive ? 'Vote Now ᴺ' : 'Voting Closed'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
     </ScrollView>
@@ -183,40 +162,46 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  content: { gap: 16, paddingBottom: 24, paddingTop: 16 },
+  container: { flex: 1, backgroundColor: '#f0f2f5' },
+  content: { gap: 16, paddingBottom: 30, paddingTop: 12 },
   closedBanner: {
-    backgroundColor: '#fef2f2', marginHorizontal: 16, borderRadius: 12,
+    backgroundColor: '#fef2f2', marginHorizontal: 20, borderRadius: 12,
     padding: 12, borderWidth: 1, borderColor: '#fecaca',
   },
   closedText: { fontSize: 12, fontWeight: 'bold', color: '#dc2626', textAlign: 'center' },
 
   // Countdown
   countdownCard: {
-    backgroundColor: '#0f172a', borderRadius: 16, padding: 16,
-    marginHorizontal: 16, borderWidth: 1, borderColor: '#1e293b',
+    backgroundColor: '#0f172a', borderRadius: 16, padding: 18,
+    marginHorizontal: 20, borderWidth: 1, borderColor: '#1e293b',
   },
   countdownLabel: {
-    color: '#94a3b8', fontSize: 10, textTransform: 'uppercase',
+    color: '#64748b', fontSize: 10, textTransform: 'uppercase',
     letterSpacing: 1, marginBottom: 12,
   },
   countdownRow: { flexDirection: 'row', justifyContent: 'space-between' },
   countdownItem: { alignItems: 'center', flex: 1 },
   countdownNum: {
-    color: '#ffffff', fontSize: 30, fontWeight: 'bold', fontFamily: 'monospace',
+    color: '#ffffff', fontSize: 32, fontWeight: 'bold', fontFamily: 'monospace',
   },
   countdownUnit: {
-    color: '#ffffff', fontSize: 9, textTransform: 'uppercase',
-    letterSpacing: 2, marginTop: 4, opacity: 0.7,
+    color: '#64748b', fontSize: 9, textTransform: 'uppercase',
+    letterSpacing: 1, marginTop: 4,
   },
 
   // Carousel
-  carouselWrapper: { marginHorizontal: 16 },
-  carouselContainer: {
-    borderRadius: 16, overflow: 'hidden',
-    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4,
+  carouselWrapper: { marginHorizontal: 20 },
+  flyerCard: {
+    width: CARD_WIDTH,
+    height: CARD_WIDTH,
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 5,
   },
-  flyerImage: { width: width - 32, height: (width - 32) * 1.05 },
+  flyerImage: { width: CARD_WIDTH, height: CARD_WIDTH },
   dotsRow: {
     flexDirection: 'row', justifyContent: 'center',
     gap: 6, paddingVertical: 10,
@@ -225,12 +210,14 @@ const styles = StyleSheet.create({
   dotActive: { width: 20, backgroundColor: '#2563eb' },
 
   // Vote Now Button
+  voteBtnWrapper: { alignItems: 'center', paddingHorizontal: 20 },
   voteNowBtn: {
     backgroundColor: '#2563eb',
-    marginHorizontal: 16,
     borderRadius: 14,
-    paddingVertical: 16,
+    paddingVertical: 15,
+    paddingHorizontal: 40,
     alignItems: 'center',
+    width: '100%',
     shadowColor: '#2563eb',
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -238,15 +225,6 @@ const styles = StyleSheet.create({
   },
   voteBtnDisabled: { backgroundColor: '#94a3b8' },
   voteNowBtnText: {
-    color: '#ffffff', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5,
+    color: '#ffffff', fontWeight: 'bold', fontSize: 16,
   },
-
-  // Security
-  securityNote: {
-    backgroundColor: '#f1f5f9', borderRadius: 12, padding: 14,
-    marginHorizontal: 16, borderWidth: 1, borderColor: '#e2e8f0',
-  },
-  securityTitle: { fontSize: 11, fontWeight: 'bold', color: '#334155', marginBottom: 4 },
-  securityText: { fontSize: 10, color: '#64748b', lineHeight: 15 },
-  empty: { fontSize: 12, color: '#64748b', textAlign: 'center' },
 });
