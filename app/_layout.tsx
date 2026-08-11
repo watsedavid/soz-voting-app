@@ -128,17 +128,17 @@ export default function Layout() {
             textTransform: 'uppercase',
             letterSpacing: 1,
           },
-          headerStyle: { backgroundColor: '#0f172a' },
-          headerTintColor: '#ffffff',
+headerStyle: { backgroundColor: '#ffffff' },
+headerTintColor: '#0f172a',
           animation: 'fade',
           headerTitle: () => null,
           headerLeft: () => (
             <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 16, gap: 14 }}>
               <TouchableOpacity onPress={() => setDrawerOpen(true)}>
-                <Ionicons name="menu" size={28} color="#ffffff" />
+                <Ionicons name="menu" size={28} color="#0f172a" />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => Alert.alert('Notifications', 'You will be notified when voting opens or closes.')}>
-                <Ionicons name="notifications-outline" size={24} color="#ffffff" />
+                <Ionicons name="notifications-outline" size={24} color="#0f172a" />
               </TouchableOpacity>
             </View>
           ),
